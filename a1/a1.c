@@ -392,14 +392,16 @@ void findall(const char *path, int suc_flag)
     while((entry = readdir(dir)) != NULL) {
         if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             snprintf(fullPath, 512, "%s/%s", path, entry->d_name);
+                 
             if(lstat(fullPath, &statbuf) == 0) {
             	if(check(fullPath))
-            		printf("%s\n", fullPath);
-                if(S_ISDIR(statbuf.st_mode)) {
+            	    printf("%s\n", fullPath);
+            	
+            	if(S_ISDIR(statbuf.st_mode)) 
                     findall(fullPath, 1);
-                }
+            	
             }
-        }
+    	}
     }
     closedir(dir);
 }
