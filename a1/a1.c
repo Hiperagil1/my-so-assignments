@@ -121,6 +121,7 @@ void parse(const char* file) {
     Header h;
    
     fread(h.magic, sizeof(char), 4, fd);
+    h.magic[4] = 0;
     fread(&h.header_size, sizeof(short), 1, fd);
     fread(&h.version, sizeof(int), 1, fd);
     fread(&h.no_of_sections, sizeof(unsigned char), 1, fd);
@@ -129,6 +130,7 @@ void parse(const char* file) {
     memset(s_h, 0, sizeof(s_h)); // inițializare cu zero
     for(int i =0; i<h.no_of_sections; i++){
     	fread(&s_h[i].sect_name, sizeof(char), 12, fd);
+    	s_h[i].sect_name[12] = 0;
     	fread(&s_h[i].sect_type, sizeof(int), 1, fd);
     	fread(&s_h[i].sect_offset, sizeof(int), 1, fd);
     	fread(&s_h[i].sect_size, sizeof(int), 1, fd);    
@@ -308,6 +310,7 @@ int check(const char *fullPath){
     		//citim headerul
     		Header h;
     		fread(h.magic, sizeof(char), 4, fd);
+    		h.magic[4] = 0;
     		fread(&h.header_size, sizeof(short), 1, fd);
     		fread(&h.version, sizeof(int), 1, fd);
     		fread(&h.no_of_sections, sizeof(unsigned char), 1, fd);
@@ -340,7 +343,7 @@ int check(const char *fullPath){
     		
     		
     		if(ok == 1){
-    			char aux;
+    			char aux = ' ';
     			//fseek(fd, s_h[0].sect_offset, SEEK_SET);
     			for(int j = 0; j<h.no_of_sections; j++){
     				int cont_linii = 0;
@@ -369,7 +372,7 @@ int check(const char *fullPath){
     			
     		}
     		fclose(fd);
-    		return 0;
+    		return ok;
 }
 
 void findall(const char *path, int suc_flag)
@@ -378,7 +381,7 @@ void findall(const char *path, int suc_flag)
     struct dirent *entry = NULL;
     char fullPath[512];
     struct stat statbuf;
-    //
+    
     dir = opendir(path);
     if(dir == NULL) {
     	printf("ERROR\n");
@@ -397,14 +400,17 @@ void findall(const char *path, int suc_flag)
             	if(check(fullPath))
             	    printf("%s\n", fullPath);
             	
-            	if(S_ISDIR(statbuf.st_mode)) 
+            	if(S_ISDIR(statbuf.st_mode)){
                     findall(fullPath, 1);
+                    //closedir(dir);
+                }
             	
             }
     	}
     }
     closedir(dir);
 }
+
 
 int main(int argc, char **argv){
     if(argc >= 2){
