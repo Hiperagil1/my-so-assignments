@@ -18,8 +18,6 @@ typedef struct {
 
 void *threads(void *param) {
     TH_STRUCT *s = (TH_STRUCT *)param;
-    
-
     if (s->no_thread == 3) {
         // Firul de execuție 3 începe imediat
         sem_wait(&sem5);
@@ -40,6 +38,37 @@ void *threads(void *param) {
     return NULL;
 }
 
+sem_t semafor_bariera;
+int running_threads = 0;
+void *bariera(void *param){
+    TH_STRUCT *s = (TH_STRUCT *)param;
+    
+    if(s->no_thread == 13){
+        while (1) {
+            sem_wait(&semafor_bariera);
+            if (running_threads == 4) {
+                info(BEGIN, s->no_process, s->no_thread);
+                info(END, s->no_process, s->no_thread);
+                sem_post(&semafor_bariera);
+                break;
+            } else {
+                running_threads--;
+                sem_post(&semafor_bariera);
+            }
+        }
+    } else {
+        sem_wait(&semafor_bariera);
+        running_threads++;
+        info(BEGIN, s->no_process, s->no_thread);
+        info(END, s->no_process, s->no_thread);
+        running_threads--;
+        sem_post(&semafor_bariera);
+    }
+    
+    return NULL;
+}
+
+
 int main() {
     init();
     info(BEGIN, 1, 0);
@@ -47,6 +76,26 @@ int main() {
     // Process 2
     if (fork() == 0) {
         info(BEGIN, 2, 0);
+        
+        TH_STRUCT params_2[49];
+        pthread_t threaduri_2[49];
+        
+         if(sem_init(&semafor_bariera, 0, 5) != 0){
+            perror("Could not init the semaphore logSem.");
+            return -1;
+         }
+        
+        for(int i = 0; i<49; i++){
+            params_2[i].no_process = 2;
+            params_2[i].no_thread = i+1;
+            pthread_create(&threaduri_2[i], NULL, bariera, &params_2[i]);
+        }
+        
+        for(int i = 0; i<49; i++){
+            pthread_join(threaduri_2[i], NULL);
+        }
+        
+ 
         info(END, 2, 0);
     } else {
         wait(NULL);
