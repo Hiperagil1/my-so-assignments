@@ -37,34 +37,36 @@ void *threads(void *param) {
 
     return NULL;
 }
+  
 
-sem_t semafor_bariera;
-int running_threads = 0;
+pthread_barrier_t barrier;
+
+sem_t threads_hold;
+
+sem_t barrier_hold;
+
+int nr = 0;
+
 void *bariera(void *param){
     TH_STRUCT *s = (TH_STRUCT *)param;
     
     if(s->no_thread == 13){
-        while (1) {
-            sem_wait(&semafor_bariera);
-            if (running_threads == 4) {
-                info(BEGIN, s->no_process, s->no_thread);
-                info(END, s->no_process, s->no_thread);
-                sem_post(&semafor_bariera);
-                break;
-            } else {
-                running_threads--;
-                sem_post(&semafor_bariera);
-            }
-        }
-    } else {
-        sem_wait(&semafor_bariera);
-        running_threads++;
         info(BEGIN, s->no_process, s->no_thread);
         info(END, s->no_process, s->no_thread);
-        running_threads--;
-        sem_post(&semafor_bariera);
+        pthread_barrier_wait(&barrier);
+        sem_post(&threads_hold);
+    }else if(s->no_thread == 1 || s->no_thread == 2 || s->no_thread == 3 || s->no_thread == 4){
+        info(BEGIN, s->no_process, s->no_thread);
+        pthread_barrier_wait(&barrier);
+        info(END, s->no_process, s->no_thread);
+        sem_post(&threads_hold);
+    }else{
+        sem_wait(&threads_hold);
+        info(BEGIN, s->no_process, s->no_thread);
+        info(END, s->no_process, s->no_thread);
+        sem_post(&threads_hold);
     }
-    
+           
     return NULL;
 }
 
@@ -80,10 +82,8 @@ int main() {
         TH_STRUCT params_2[49];
         pthread_t threaduri_2[49];
         
-         if(sem_init(&semafor_bariera, 0, 5) != 0){
-            perror("Could not init the semaphore logSem.");
-            return -1;
-         }
+        pthread_barrier_init(&barrier, NULL, 5);
+        sem_init(&threads_hold, 0, 0);
         
         for(int i = 0; i<49; i++){
             params_2[i].no_process = 2;
