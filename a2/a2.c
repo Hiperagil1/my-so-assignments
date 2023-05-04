@@ -46,7 +46,6 @@ sem_t threads_hold;
 sem_t barrier_hold;
 
 int nr = 0;
-
 void *bariera(void *param){
     TH_STRUCT *s = (TH_STRUCT *)param;
     
@@ -65,12 +64,18 @@ void *bariera(void *param){
         info(BEGIN, s->no_process, s->no_thread);
         info(END, s->no_process, s->no_thread);
         sem_post(&threads_hold);
-    }
-           
+    }  
     return NULL;
 }
 
+void *interprocess(void *param){
+    TH_STRUCT *s = (TH_STRUCT *)param;
+    
+    info(BEGIN, s->no_process, s->no_thread);
+    info(END, s->no_process, s->no_thread);
 
+    return NULL;
+}
 int main() {
     init();
     info(BEGIN, 1, 0);
@@ -107,6 +112,21 @@ int main() {
             // Process 4
             if (fork() == 0) {
                 info(BEGIN, 4, 0);
+                
+                TH_STRUCT params_4[5];
+                pthread_t tid4[5];
+                
+                for(int i = 0; i<5; i++){
+                    params_4[i].no_process = 4;
+                    params_4[i].no_thread = i+1;
+                    pthread_create(&tid4[i], NULL, interprocess, &params_4[i]);
+                }
+                
+                for(int i = 0; i<5; i++){
+                    pthread_join(tid4[i], NULL);
+                }
+         
+                
                 info(END, 4, 0);
             } else {
                 wait(NULL);
